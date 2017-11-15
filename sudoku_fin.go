@@ -6,6 +6,12 @@ import (
 	_"time"
 	"math/rand"
 	"time"
+	"os"
+	"io/ioutil"
+	"io"
+	"bufio"
+	"strconv"
+	_"reflect"
 )
 
 func main() {
@@ -27,6 +33,59 @@ func main() {
 	t := time.Now()
 	elapsed := t.Sub(start)
 	fmt.Println(elapsed);
+	for i := 0; i <= 5; i++ {
+		grid_to_resolve := sudoku.grid; //empty grid to push value from .txt
+
+		file := getSudokuGame("game", i);
+		scanner := bufio.NewScanner(file)
+		lineGrid := 0;
+		for scanner.Scan() { // internally, it advances token based on sperator
+			//fmt.Println(scanner.Text())  // token in unicode-char
+			//fmt.Println("Length", len(scanner.Text()))
+
+			retourScan := scanner.Text()
+			retourScanConvRune := []rune(retourScan);
+			lineGrid += 1
+
+			//y == line number
+			fmt.Println("game", i);
+			fmt.Println("line", lineGrid, retourScanConvRune)
+			fmt.Println("\n")
+			//fmt.Println("value index :", 0 ,strconv.QuoteRune(retourScanConvRune[0]))
+			for rowGrid := 0; rowGrid < 9; rowGrid++ {
+				//fmt.Println(strconv.QuoteRune(retourScanConvRune[rowGrid]))
+				//pas un 0 mais un nombre
+				//push dans la grid la valeur de la rune
+				numberStr := string(retourScanConvRune[rowGrid])
+				number, err := strconv.Atoi(numberStr)
+
+				fmt.Println("Le nombre ", number)
+				grid_to_resolve[lineGrid-1][rowGrid] = number
+				if err != nil {
+					//fmt.Println("Le nombre ", number)
+					//fmt.Println("line" , lineGrid)
+					//fmt.Println("row", rowGrid)
+					//grid_to_resolve[lineGrid-1][rowGrid] = 9
+
+				}
+
+			}
+
+
+		}
+		display(solve(grid, 1))
+
+
+		b, err := ioutil.ReadAll(file)
+		if err != nil {
+			print(err)
+		} else {
+			fmt.Println("");
+			fmt.Println(b)
+		}
+
+	}
+
 }
 
 type Sudoku struct {
@@ -200,4 +259,16 @@ func display(grid [9][9]int) {
 		fmt.Println(grid[i])
 	}
 	fmt.Println("");
+}
+
+//creer des sudoku dans les txt
+//creer la methode qui les ouvrent
+
+func getSudokuGame(nameFile string, counter int) io.Reader {
+	file, err := os.Open("./sudoku_test/" + nameFile + strconv.Itoa(counter) + ".txt")
+	if err != nil {
+		fmt.Println(err);
+	}
+	//fmt.Println(file)
+	return file
 }
