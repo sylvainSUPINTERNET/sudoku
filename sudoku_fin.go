@@ -12,9 +12,20 @@ import (
 	"bufio"
 	"strconv"
 	_"reflect"
+	_"sync"
+	"runtime"
+
 )
 
 func main() {
+
+	nbCore := runtime.NumCPU();
+	fmt.Println(nbCore)
+
+	var channel chan Sudoku
+	channel = make(chan Sudoku)
+
+
 	sudoku := Sudoku{}
 
 	//manualy or random
@@ -33,6 +44,12 @@ func main() {
 	t := time.Now()
 	elapsed := t.Sub(start)
 	fmt.Println(elapsed);
+
+	//var wg sync.WaitGroup
+	//into go devant display boule wg.Add(1) a la fin de la boucle wg.Wait()
+	//dans display prendre en param wg *sync.WaitGroup wg.Done()
+
+
 	for i := 0; i <= 5; i++ {
 		grid_to_resolve := sudoku.grid; //empty grid to push value from .txt
 
@@ -46,7 +63,6 @@ func main() {
 			retourScan := scanner.Text()
 			retourScanConvRune := []rune(retourScan);
 			lineGrid += 1
-
 			//y == line number
 			fmt.Println("game", i);
 			fmt.Println("line", lineGrid, retourScanConvRune)
