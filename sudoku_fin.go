@@ -9,26 +9,28 @@ import (
 	"os"
 	"io/ioutil"
 	"io"
-	"bufio"
+	_"bufio"
 	"strconv"
 	_"reflect"
 	_"sync"
 	"runtime"
 
+	"sync"
+	"bufio"
 )
 
 func main() {
 
+	//chan
 	nbCore := runtime.NumCPU();
-	fmt.Println(nbCore)
-
-	var channel chan Sudoku
-	channel = make(chan Sudoku)
+	fmt.Println("Core", nbCore)
+	var channel chan [9][9]int
+	channel = make(chan [9][9]int)
 
 
 	sudoku := Sudoku{}
 
-	//manualy or random
+	//manualy or random	
 	grid := sudoku.grid
 	grid = fillDdefault(sudoku)
 	//fmt.Println(grid); //grid filled auto
@@ -50,12 +52,26 @@ func main() {
 	//dans display prendre en param wg *sync.WaitGroup wg.Done()
 
 
+	//chan
+	var wg sync.WaitGroup
+
+	for nb_core := 0; nb_core <= nbCore; nb_core++ {
+		go solveGo(channel, &wg)
+		go solveGo(channel, &wg)
+		go solveGo(channel, &wg)
+		go solveGo(channel, &wg)
+	}
+
 	for i := 0; i <= 5; i++ {
 		grid_to_resolve := sudoku.grid; //empty grid to push value from .txt
 
 		file := getSudokuGame("game", i);
 		scanner := bufio.NewScanner(file)
 		lineGrid := 0;
+
+
+
+
 		for scanner.Scan() { // internally, it advances token based on sperator
 			//fmt.Println(scanner.Text())  // token in unicode-char
 			//fmt.Println("Length", len(scanner.Text()))
@@ -64,9 +80,9 @@ func main() {
 			retourScanConvRune := []rune(retourScan);
 			lineGrid += 1
 			//y == line number
-			fmt.Println("game", i);
-			fmt.Println("line", lineGrid, retourScanConvRune)
-			fmt.Println("\n")
+			//fmt.Println("game", i);
+			//fmt.Println("line", lineGrid, retourScanConvRune)
+			//fmt.Println("\n")
 			//fmt.Println("value index :", 0 ,strconv.QuoteRune(retourScanConvRune[0]))
 			for rowGrid := 0; rowGrid < 9; rowGrid++ {
 				//fmt.Println(strconv.QuoteRune(retourScanConvRune[rowGrid]))
@@ -75,7 +91,7 @@ func main() {
 				numberStr := string(retourScanConvRune[rowGrid])
 				number, err := strconv.Atoi(numberStr)
 
-				fmt.Println("Le nombre ", number)
+				//fmt.Println("Le nombre ", number)
 				grid_to_resolve[lineGrid-1][rowGrid] = number
 				if err != nil {
 					//fmt.Println("Le nombre ", number)
@@ -86,11 +102,15 @@ func main() {
 				}
 
 			}
-
-
+			wg.Add(1)
+			channel <- grid_to_resolve
 		}
-		display(solve(grid, 1))
 
+		//scan
+		wg.Wait()
+
+
+		display(solve(grid, 1))
 
 		b, err := ioutil.ReadAll(file)
 		if err != nil {
@@ -101,6 +121,7 @@ func main() {
 		}
 
 	}
+
 
 }
 
@@ -235,6 +256,19 @@ func isSolved(grid [9][9]int) bool {
 //ENSUITE isSolved qui va check si a la row la valeur qu'on via attribuer n'existe pas SI elle existe ALORS on reset la valeur à 0 et ce qui va donc au moment du recall de solve
 // nous faire rerentrer dans replaceEmpty (cette raw fraichement remis à 0) et nous set une nouvelle valeur à tester entre 1 et 9
 // etc jusqua isSolved return true, et stop la boucle
+
+
+func solveGo(channel chan [9][9]int, wg *sync.WaitGroup) {
+	for {
+		var grid [9][9]int
+		fmt.Println(grid)
+		grid = <-channel // Receive
+
+		solve(grid, 1)
+
+		wg.Done()
+	}
+}
 
 func solve(grid [9][9]int, num int) [9][9]int {
 	// ************************ for empty value in grid
